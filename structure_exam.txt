@@ -1,0 +1,44 @@
+memory-typing/
+├── AGENTS.md
+├── README.md
+├── pyproject.toml
+├── src/
+│   └── memory_typing/
+│       ├── __init__.py
+│       ├── main.py
+│       │
+│       ├── domain/
+│       │   ├── book.py
+│       │   ├── quiz.py
+│       │   ├── session.py
+│       │   └── study_event.py
+│       │
+│       ├── core/
+│       │   ├── typing_engine.py
+│       │   ├── event_engine.py
+│       │   ├── quiz_engine.py
+│       │   ├── scoring.py
+│       │   └── review_scheduler.py
+│       │
+│       ├── storage/
+│       │   ├── database.py
+│       │   └── repositories.py
+│       │
+│       └── ui/
+│           ├── main_window.py
+│           ├── library_view.py
+│           ├── typing_view.py
+│           ├── quiz_view.py
+│           ├── result_view.py
+│           └── widgets/
+│
+├── tests/
+│   ├── unit/
+│   └── integration/
+│
+├── docs/
+│   ├── PRODUCT_SPEC.md
+│   ├── ARCHITECTURE.md
+│   └── DATA_FORMAT.md
+│
+└── sample_data/
