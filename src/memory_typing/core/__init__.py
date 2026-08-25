@@ -5,5 +5,12 @@ from memory_typing.core.typing_engine import (
     TypingEngine,
     TypingState,
 )
+from memory_typing.core.typing_session import SessionEvaluation, TypingSession
 
-__all__ = ["CharacterComparison", "TypingEngine", "TypingState"]
+__all__ = [
+    "CharacterComparison",
+    "SessionEvaluation",
+    "TypingEngine",
+    "TypingSession",
+    "TypingState",
+]

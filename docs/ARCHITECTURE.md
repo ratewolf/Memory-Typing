@@ -35,3 +35,18 @@ core는 PySide6에 의존하지 않는다.
 추상화로 추가한다. 무작위 동작은 테스트에서 난수 생성기 또는 시드를 주입할 수 있게 한다.
 SQLite 스키마 변경은 버전이 명확한 마이그레이션으로 관리하고 안정적인 콘텐츠 ID를 사용한다.
 
+## 로컬 영속성
+
+`storage.Database`는 SQLite 파일과 연결의 수명주기를 담당한다. 새 데이터베이스 파일은 최초
+연결 시 스키마 버전 1로 자동 초기화되며, 모든 연결에서 `PRAGMA foreign_keys = ON`을 적용한다.
+스키마 버전은 SQLite의 `user_version`으로 기록하여 후속 명시적 마이그레이션의 기준으로 삼는다.
+
+`storage.BookRepository`는 `Book → Chapter → Paragraph → Sentence` 계층을 SQL 행으로
+매핑한다. 계층 전체 삽입은 하나의 트랜잭션이므로 중간 오류가 발생하면 전부 롤백된다. 조회는
+각 부모 안에서 `source_order`로 명시적으로 정렬하며 저장된 안정 ID와 `original_text`를 그대로
+도메인 객체로 복원한다. 도메인 모델은 SQLite나 SQL을 알지 못한다.
+
+콘텐츠 외래 키는 `ON DELETE RESTRICT`와 `ON UPDATE RESTRICT`를 사용한다. 따라서 자식이 있는
+부모의 삭제나 ID 변경이 암묵적으로 연쇄 실행되지 않는다. 향후 콘텐츠 편집 및 학습 이력 기능도
+명시적인 저장소 작업과 마이그레이션으로 추가하며, 콘텐츠 변경의 부작용으로 학습 이력을 삭제하지
+않는다.
