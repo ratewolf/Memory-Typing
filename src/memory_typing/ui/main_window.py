@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PySide6.QtWidgets import QMainWindow
 
-from memory_typing.core.txt_importer import TxtImporter
+from memory_typing.core import JsonImporter, JsonImportError
 from memory_typing.domain import Book
 from memory_typing.ui.typing_view import TypingView
 
@@ -21,8 +21,8 @@ class MainWindow(QMainWindow):
 
 
 def _load_sample_book() -> Book | None:
-    sample_path = Path(__file__).resolve().parents[3] / "sample_data" / "korean_sample.txt"
+    sample_path = Path(__file__).resolve().parents[3] / "sample_data" / "korean_sample.json"
     try:
-        return TxtImporter().import_file(sample_path)
-    except (OSError, UnicodeError):
+        return JsonImporter().import_file(sample_path)
+    except (OSError, UnicodeError, JsonImportError):
         return None

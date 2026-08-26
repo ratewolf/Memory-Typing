@@ -17,8 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from memory_typing.core import SessionEvaluation, TypingSession
-from memory_typing.core.txt_importer import TxtImporter
+from memory_typing.core import JsonImporter, JsonImportError, SessionEvaluation, TypingSession
 from memory_typing.domain import Book, Chapter
 from memory_typing.ui.typing_input import ImeAwareTextEdit
 from memory_typing.ui.typing_presentation import TextSegment, TextStatus, build_text_segments
@@ -45,7 +44,7 @@ class TypingView(QWidget):
         self._book_combo.setAccessibleName("책 선택")
         self._chapter_combo = QComboBox()
         self._chapter_combo.setAccessibleName("장 선택")
-        self._import_button = QPushButton("TXT 가져오기")
+        self._import_button = QPushButton("JSON 가져오기")
         self._position_label = QLabel("학습할 책과 장을 선택하세요.")
         self._target_label = QLabel()
         self._target_label.setTextFormat(Qt.TextFormat.RichText)
@@ -78,7 +77,7 @@ class TypingView(QWidget):
 
         self._book_combo.currentIndexChanged.connect(self._select_book)
         self._chapter_combo.currentIndexChanged.connect(self._select_chapter)
-        self._import_button.clicked.connect(self._import_txt)
+        self._import_button.clicked.connect(self._import_json)
         self._typing_input.textChanged.connect(self._on_text_changed)
         self._typing_input.composition_state_changed.connect(self._on_composition_changed)
 
@@ -191,16 +190,16 @@ class TypingView(QWidget):
             f"· 정확도 {state.accuracy * 100:.1f}%"
         )
 
-    def _import_txt(self) -> None:
+    def _import_json(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "학습할 TXT 파일 선택", "", "텍스트 파일 (*.txt)"
+            self, "학습할 JSON 파일 선택", "", "JSON 파일 (*.json)"
         )
         if not path:
             return
         try:
-            book = TxtImporter().import_file(Path(path))
-        except (OSError, UnicodeError) as error:
-            QMessageBox.warning(self, "가져오기 실패", f"TXT 파일을 읽을 수 없습니다.\n{error}")
+            book = JsonImporter().import_file(Path(path))
+        except (OSError, UnicodeError, JsonImportError) as error:
+            QMessageBox.warning(self, "가져오기 실패", f"JSON 파일을 읽을 수 없습니다.\n{error}")
             return
         self._books.append(book)
         self._book_combo.addItem(book.title)
