@@ -1,0 +1,118 @@
+{
+  "format_version": 1,
+  "book": {
+    "id": "ieip-memory-book",
+    "title": "정보처리산업기사 핵심요약",
+    "chapters": [
+      {
+        "id": "ieip-memory-chapter-1",
+        "title": "응용 SW 기초 기술 활용",
+        "paragraphs": [
+          {
+            "id": "ieip-memory-paragraph-1",
+            "sentences": [
+              {
+                "id": "ieip-memory-sentence-1",
+                "text": "1. 운영체제의 성능 평가 기준"
+              },
+              {
+                "id": "ieip-memory-sentence-2",
+                "text": "처리 능력(Throughput) : 일정 시간 내에 시스템이 처리하는 일의 양"
+              },
+              {
+                "id": "ieip-memory-sentence-3",
+                "text": "사용 가능도(Availability) : 시스템의 자원을 사용할 필요가 있을 때 즉시 사용 가능한 정도"
+              },
+              {
+                "id": "ieip-memory-sentence-4",
+                "text": "신뢰도(Reliability) : 시스템이 주어진 문제를 정확하게 해결하는 정도"
+              },
+              {
+                "id": "ieip-memory-sentence-5",
+                "text": "반환 시간(Tum Around Time) : 시스템에 작업을 의뢰한 시간부터 처리가 완료될 때까지 걸린 시간"
+              }
+            ]
+          },
+          {
+            "id": "ieip-memory-paragraph-2",
+            "sentences": [
+              {
+                "id": "ieip-memory-sentence-6",
+                "text": "2. 운영체제 운용 기법"
+              },
+              {
+                "id": "ieip-memory-sentence-7",
+                "text": "일괄 처리(Batch Processing) 시스템 : 초기의 컴퓨터 시스템에서 사용된 형태로, 일정량 또는 일정 기간 동안 데이터를 모아서 한꺼번에 처리하는 방식"
+              },
+              {
+                "id": "ieip-memory-sentence-8",
+                "text": "실시간 처리(Real Time Processing) 시스템 : 데이터 발생 즉시, 또는 데이터 처리 요구가 있는 즉시 처리하여 결과를 산출하는 방식"
+              },
+              {
+                "id": "ieip-memory-sentence-9",
+                "text": "다중 프로그래밍(Multi-Programming) 시스템 : 하나의 CPU와 주기억장치를 이용하여 여러 개의 프로그램을 동시에 처리하는 방식"
+              },
+              {
+                "id": "ieip-memory-sentence-10",
+                "text": "다중 처리(Multi-Processing) 시스템 : 여러 개의 CPU와 하나의 주기억장치를 이용하여 여러 개의 프로그램을 동시에 처리하는 방식"
+              },
+              {
+                "id": "ieip-memory-sentence-11",
+                "text": "시분할(Time Sharing) 시스템 : 여러 명의 사용자가 사용하는 시스템에서 컴퓨터가 사용자들의 프로그램을 번갈아가며 처리해 줌으로써 각 사용자에게 독립된 컴퓨터를 사용하는 느낌을 주는 것으로, 라운드 로빈(Round Robin) 방식이라고도 함"
+              }
+            ]
+          },
+          {
+            "id": "ieip-memory-paragraph-3",
+            "sentences": [
+              {
+                "id": "ieip-memory-sentence-12",
+                "text": "3. 프로세스의 여러 가지 정의"
+              },
+              {
+                "id": "ieip-memory-sentence-13",
+                "text": "실행중인 프로그램"
+              },
+              {
+                "id": "ieip-memory-sentence-14",
+                "text": "PCP를 가진 프로그램"
+              },
+              {
+                "id": "ieip-memory-sentence-15",
+                "text": "실기억장치(주기억장치)에 저장된 프로그램"
+              },
+              {
+                "id": "ieip-memory-sentence-16",
+                "text": "프로세서가 할당되는 실체"
+              },
+              {
+                "id": "ieip-memory-sentence-17",
+                "text": "프로시저가 활동중인 것"
+              },
+              {
+                "id": "ieip-memory-sentence-18",
+                "text": "비동기적 행위를 일으키는 주체"
+              },
+              {
+                "id": "ieip-memory-sentence-19",
+                "text": "지정된 결과를 얻기 위한 일련의 계통적 동작"
+              },
+              {
+                "id": "ieip-memory-sentence-20",
+                "text": "목적 또는 결과에 따라 발생되는 사건들의 과정"
+              },
+              {
+                "id": "ieip-memory-sentence-21",
+                "text": "운영체제가 관리하는 최소 실행 단위"
+              },
+              {
+                "id": "ieip-memory-sentence-22",
+                "text": "프로세서 제어 블록의 존재로서 명시되는 것"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
