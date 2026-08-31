@@ -1,6 +1,12 @@
 """Framework-independent study and typing logic."""
 
 from memory_typing.core.json_importer import FORMAT_VERSION, JsonImporter, JsonImportError
+from memory_typing.core.persistence import (
+    ContentConflictError,
+    ContentStore,
+    PersistenceError,
+    StudyRecordStore,
+)
 from memory_typing.core.study_events import (
     EventAnswer,
     EventContext,
@@ -21,6 +27,8 @@ from memory_typing.core.typing_session import SessionEvaluation, TypingSession
 
 __all__ = [
     "CharacterComparison",
+    "ContentConflictError",
+    "ContentStore",
     "EventAnswer",
     "EventContext",
     "EventEngine",
@@ -31,9 +39,11 @@ __all__ = [
     "JsonImportError",
     "JsonImporter",
     "PreparedEvent",
+    "PersistenceError",
     "RandomSource",
     "SessionEvaluation",
     "StudyEvent",
+    "StudyRecordStore",
     "TypingEngine",
     "TypingSession",
     "TypingState",

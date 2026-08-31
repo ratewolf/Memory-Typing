@@ -3,6 +3,7 @@
 import sys
 from collections.abc import Sequence
 
+from PySide6.QtCore import QCoreApplication
 from PySide6.QtWidgets import QApplication
 
 from memory_typing.ui.main_window import MainWindow
@@ -11,6 +12,8 @@ from memory_typing.ui.main_window import MainWindow
 def main(argv: Sequence[str] | None = None) -> int:
     """Create and run the Qt application."""
     app = QApplication(list(argv) if argv is not None else sys.argv)
+    QCoreApplication.setOrganizationName("Memory Typing")
+    QCoreApplication.setApplicationName("Memory Typing")
     window = MainWindow()
     window.show()
     return app.exec()

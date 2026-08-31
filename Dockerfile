@@ -25,6 +25,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY tests ./tests
 COPY docs ./docs
+COPY sample_data ./sample_data
 RUN pip install --no-cache-dir --no-deps -e .
 
 CMD ["memory-typing"]

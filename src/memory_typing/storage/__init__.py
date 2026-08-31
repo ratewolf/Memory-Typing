@@ -2,5 +2,6 @@
 
 from memory_typing.storage.database import SCHEMA_VERSION, Database
 from memory_typing.storage.repositories import BookRepository
+from memory_typing.storage.study_repository import StudyRepository
 
-__all__ = ["SCHEMA_VERSION", "BookRepository", "Database"]
+__all__ = ["SCHEMA_VERSION", "BookRepository", "Database", "StudyRepository"]

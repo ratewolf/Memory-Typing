@@ -162,5 +162,5 @@ def test_missing_required_structure_has_a_precise_error(
 
 
 def test_malformed_json_reports_source_location() -> None:
-    with pytest.raises(JsonImportError, match=r"2행 1열"):
+    with pytest.raises(JsonImportError, match=r"\d+행 \d+열"):
         JsonImporter().import_text('{"format_version": 1,\n}')

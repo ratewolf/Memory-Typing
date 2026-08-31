@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from memory_typing.core import ContentConflictError
 from memory_typing.core.txt_importer import TxtImporter
 from memory_typing.domain import Book, Chapter, Paragraph, Sentence
 from memory_typing.storage import SCHEMA_VERSION, BookRepository, Database
@@ -43,7 +44,14 @@ def test_fresh_database_is_initialized_automatically(tmp_path: Path) -> None:
             ).fetchall()
         }
     assert version == SCHEMA_VERSION
-    assert {"books", "chapters", "paragraphs", "sentences"} <= table_names
+    assert {
+        "books",
+        "chapters",
+        "paragraphs",
+        "sentences",
+        "study_sessions",
+        "sentence_attempts",
+    } <= table_names
 
 
 def test_insert_and_retrieve_complete_book_hierarchy(tmp_path: Path) -> None:
@@ -54,6 +62,24 @@ def test_insert_and_retrieve_complete_book_hierarchy(tmp_path: Path) -> None:
 
     assert repository.get(expected.id) == expected
     assert repository.get("missing-book") is None
+
+
+def test_list_all_returns_complete_books_in_deterministic_order(tmp_path: Path) -> None:
+    _, repository = make_repository(tmp_path)
+    second = build_book(book_id="book-2")
+    second = Book(second.id, "가나다 책", second.original_text, second.chapters)
+    first = build_book()
+    first = Book(first.id, "하나 책", first.original_text, first.chapters)
+    repository.add(first)
+
+    # Reuse the hierarchy builder with distinct stable child IDs for the second book.
+    ids = iter(f"second-{index}" for index in range(10))
+    second = TxtImporter(id_factory=lambda: next(ids)).import_text(
+        "두 번째 문장.", title=second.title
+    )
+    repository.add(second)
+
+    assert [book.title for book in repository.list_all()] == ["가나다 책", "하나 책"]
 
 
 def test_sentence_source_order_is_used_when_retrieving(tmp_path: Path) -> None:
@@ -95,7 +121,7 @@ def test_duplicate_stable_id_fails_without_damaging_existing_data(tmp_path: Path
     expected = build_book()
     repository.add(expected)
 
-    with pytest.raises(sqlite3.IntegrityError):
+    with pytest.raises(ContentConflictError):
         repository.add(expected)
 
     assert repository.get(expected.id) == expected
@@ -141,3 +167,26 @@ def test_mismatched_hierarchy_is_rejected_before_writing(tmp_path: Path) -> None
         repository.add(invalid_book)
 
     assert repository.get(invalid_book.id) is None
+
+
+def test_version_one_database_migrates_without_losing_content(tmp_path: Path) -> None:
+    database, repository = make_repository(tmp_path)
+    expected = build_book()
+    repository.add(expected)
+    with database.connect() as connection:
+        connection.execute("DROP TABLE sentence_attempts")
+        connection.execute("DROP TABLE study_sessions")
+        connection.execute("PRAGMA user_version = 1")
+
+    migrated_database = Database(database.path)
+
+    assert BookRepository(migrated_database).get(expected.id) == expected
+    with migrated_database.connect() as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+        tables = {
+            row["name"]
+            for row in connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
+        }
+    assert {"study_sessions", "sentence_attempts"} <= tables

@@ -17,8 +17,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from memory_typing.core import JsonImporter, JsonImportError, SessionEvaluation, TypingSession
-from memory_typing.domain import Book, Chapter
+from memory_typing.core import (
+    ContentConflictError,
+    ContentStore,
+    JsonImporter,
+    JsonImportError,
+    PersistenceError,
+    SessionEvaluation,
+    StudyRecordStore,
+    TypingSession,
+)
+from memory_typing.domain import Book, Chapter, StudySession
 from memory_typing.ui.typing_input import ImeAwareTextEdit
 from memory_typing.ui.typing_presentation import TextSegment, TextStatus, build_text_segments
 
@@ -32,10 +41,20 @@ _SEGMENT_STYLES = {
 class TypingView(QWidget):
     """Select content and type the current sentence using standard Qt editing."""
 
-    def __init__(self, books: tuple[Book, ...] = ()) -> None:
+    def __init__(
+        self,
+        books: tuple[Book, ...] = (),
+        *,
+        content_store: ContentStore | None = None,
+        study_record_store: StudyRecordStore | None = None,
+    ) -> None:
         super().__init__()
         self._books = list(books)
+        self._content_store = content_store
+        self._study_record_store = study_record_store
         self._session: TypingSession | None = None
+        self._study_session: StudySession | None = None
+        self._current_chapter_id: str | None = None
         self._last_evaluation: SessionEvaluation | None = None
         self._started_at: float | None = None
         self._changing_sentence = False
@@ -80,6 +99,7 @@ class TypingView(QWidget):
         self._import_button.clicked.connect(self._import_json)
         self._typing_input.textChanged.connect(self._on_text_changed)
         self._typing_input.composition_state_changed.connect(self._on_composition_changed)
+        self._typing_input.preedit_text_changed.connect(self._on_preedit_text_changed)
 
         self._populate_books()
 
@@ -118,6 +138,8 @@ class TypingView(QWidget):
         if not sentences:
             self._set_unavailable("이 장에는 입력할 문장이 없습니다.")
             return
+        self._current_chapter_id = chapter.id
+        self._study_session = None
         self._session = TypingSession(sentences)
         self._show_current_sentence()
 
@@ -136,6 +158,8 @@ class TypingView(QWidget):
 
     def _set_unavailable(self, message: str) -> None:
         self._session = None
+        self._study_session = None
+        self._current_chapter_id = None
         self._last_evaluation = None
         self._position_label.setText(message)
         self._target_label.clear()
@@ -149,6 +173,8 @@ class TypingView(QWidget):
         typed_text = self._typing_input.toPlainText()
         if typed_text and self._started_at is None:
             self._started_at = monotonic()
+            if self._study_session is None:
+                self._begin_persisted_session()
         elapsed_seconds = 0.0 if self._started_at is None else monotonic() - self._started_at
         evaluation = self._session.evaluate(typed_text, elapsed_seconds=elapsed_seconds)
         self._last_evaluation = evaluation
@@ -160,6 +186,24 @@ class TypingView(QWidget):
         if not has_preedit:
             self._on_text_changed()
 
+    def _on_preedit_text_changed(self, preedit_text: str) -> None:
+        if not preedit_text or self._session is None or self._session.is_complete:
+            return
+        candidate_text = self._typing_input.text_with_preedit()
+        if self._session.evaluate(candidate_text).typing_state.is_complete:
+            QTimer.singleShot(0, lambda: self._commit_matching_preedit(candidate_text))
+
+    def _commit_matching_preedit(self, candidate_text: str) -> None:
+        if (
+            self._session is None
+            or self._session.is_complete
+            or not self._typing_input.has_preedit
+            or self._typing_input.text_with_preedit() != candidate_text
+            or not self._session.evaluate(candidate_text).typing_state.is_complete
+        ):
+            return
+        self._typing_input.commit_preedit()
+
     def _advance_after_commit(self, evaluation: SessionEvaluation) -> None:
         if (
             self._session is None
@@ -168,9 +212,11 @@ class TypingView(QWidget):
             or self._typing_input.toPlainText() != evaluation.typing_state.typed_text
         ):
             return
+        self._record_attempt(evaluation)
         if not self._session.advance_if_complete(evaluation):
             return
         if self._session.is_complete:
+            self._complete_persisted_session()
             self._typing_input.setEnabled(False)
             self._position_label.setText(
                 f"완료 · {evaluation.sentence_count}개 문장을 모두 입력했습니다."
@@ -201,9 +247,49 @@ class TypingView(QWidget):
         except (OSError, UnicodeError, JsonImportError) as error:
             QMessageBox.warning(self, "가져오기 실패", f"JSON 파일을 읽을 수 없습니다.\n{error}")
             return
+        if any(existing.id == book.id for existing in self._books):
+            QMessageBox.warning(self, "가져오기 실패", "같은 ID의 책이 이미 저장되어 있습니다.")
+            return
+        if self._content_store is not None:
+            try:
+                self._content_store.add(book)
+            except ContentConflictError as error:
+                QMessageBox.warning(self, "가져오기 실패", str(error))
+                return
+            except PersistenceError as error:
+                QMessageBox.warning(self, "저장 실패", str(error))
+                return
         self._books.append(book)
         self._book_combo.addItem(book.title)
         self._book_combo.setCurrentIndex(len(self._books) - 1)
+
+    def _begin_persisted_session(self) -> None:
+        if self._study_record_store is None or self._current_chapter_id is None:
+            return
+        try:
+            self._study_session = self._study_record_store.start_session(self._current_chapter_id)
+        except PersistenceError as error:
+            QMessageBox.warning(self, "기록 저장 실패", str(error))
+
+    def _record_attempt(self, evaluation: SessionEvaluation) -> None:
+        if self._study_record_store is None or self._study_session is None:
+            return
+        try:
+            self._study_record_store.record_sentence_attempt(
+                self._study_session.id,
+                evaluation.sentence.id,
+                evaluation.typing_state,
+            )
+        except PersistenceError as error:
+            QMessageBox.warning(self, "기록 저장 실패", str(error))
+
+    def _complete_persisted_session(self) -> None:
+        if self._study_record_store is None or self._study_session is None:
+            return
+        try:
+            self._study_session = self._study_record_store.complete_session(self._study_session.id)
+        except PersistenceError as error:
+            QMessageBox.warning(self, "기록 저장 실패", str(error))
 
 
 def _segments_to_html(segments: tuple[TextSegment, ...]) -> str:
